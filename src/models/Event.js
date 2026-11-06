@@ -32,11 +32,40 @@ module.exports = {
       starts_at: values.startsAt,
       ends_at: values.endsAt || null,
       reminder_minutes: values.reminderMinutes,
-      shared_with: values.sharedWith || []
+      shared_with: values.sharedWith || [],
+      category: values.category || 'meeting',
+      all_day: values.allDay === true
     };
     const { data, error } = await supabase.from('events').insert(row).select('*').single();
     throwOnError(error);
     return mapEvent(data);
+  },
+  async findById(id) {
+    const { data, error } = await supabase.from('events').select('*').eq('id', id).maybeSingle();
+    throwOnError(error);
+    return mapEvent(data);
+  },
+  async update(id, values) {
+    const row = {
+      title: values.title,
+      description: values.description || '',
+      location: values.location || '',
+      starts_at: values.startsAt,
+      ends_at: values.endsAt || null,
+      reminder_minutes: values.reminderMinutes,
+      shared_with: values.sharedWith || [],
+      category: values.category || 'meeting',
+      all_day: values.allDay === true,
+      reminder_sent_at: null,
+      updated_at: new Date().toISOString()
+    };
+    const { data, error } = await supabase.from('events').update(row).eq('id', id).select('*').single();
+    throwOnError(error);
+    return mapEvent(data);
+  },
+  async remove(id) {
+    const { error } = await supabase.from('events').delete().eq('id', id);
+    throwOnError(error);
   },
   async findDueForReminder() {
     const now = new Date();

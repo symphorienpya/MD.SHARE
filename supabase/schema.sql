@@ -99,6 +99,8 @@ create table if not exists public.events (
   reminder_minutes integer not null default 15,
   reminder_sent_at timestamptz,
   shared_with uuid[] not null default '{}',
+  category text not null default 'meeting',
+  all_day boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

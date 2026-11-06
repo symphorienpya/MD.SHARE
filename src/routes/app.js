@@ -145,12 +145,16 @@ router.post('/api/events', async (req, res, next) => {
     if (!title || Number.isNaN(start.getTime())) return res.status(400).json({ error: 'A title and valid start date/time are required.' });
     if (title.length > 80) return res.status(400).json({ error: 'The event title must be 80 characters or fewer.' });
     if (end && end <= start) return res.status(400).json({ error: 'The end date/time must be after the start date/time.' });
-    const reminderMinutes = 15;
+    const allowedCategories = ['meeting', 'work', 'deadline', 'personal', 'holiday'];
+    const allowedReminders = [0, 5, 15, 30, 60, 1440];
+    const reminderMinutes = Number(req.body.reminderMinutes ?? 15);
+    const category = allowedCategories.includes(req.body.category) ? req.body.category : 'meeting';
+    if (!allowedReminders.includes(reminderMinutes)) return res.status(400).json({ error: 'Choose a valid reminder.' });
     const sharedWith = [...new Set(Array.isArray(req.body.sharedWith) ? req.body.sharedWith : req.body.sharedWith ? [req.body.sharedWith] : [])];
     const event = await Event.create({
       owner: req.session.userId, title, startsAt: start.toISOString(), endsAt: end?.toISOString() || null,
       description: String(req.body.description || '').trim(), location: String(req.body.location || '').trim(),
-      reminderMinutes, sharedWith
+      reminderMinutes, sharedWith, category, allDay: req.body.allDay === true
     });
     if (sharedWith.length) {
       const notifications = await Notification.insertMany(sharedWith.map((recipient) => ({
@@ -162,6 +166,50 @@ router.post('/api/events', async (req, res, next) => {
       notifications.forEach((notification) => req.app.get('io').to(`user:${notification.recipient}`).emit('notification:new', notification));
     }
     res.status(201).json(event);
+  } catch (error) { next(error); }
+});
+router.put('/api/events/:id', async (req, res, next) => {
+  try {
+    const existing = await Event.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Event not found.' });
+    if (existing.owner_id !== req.session.userId) return res.status(403).json({ error: 'Only the event owner can edit it.' });
+    const title = String(req.body.title || '').trim();
+    const start = new Date(String(req.body.startsAt || ''));
+    const end = req.body.endsAt ? new Date(String(req.body.endsAt)) : null;
+    if (!title || Number.isNaN(start.getTime())) return res.status(400).json({ error: 'A title and valid start date/time are required.' });
+    if (title.length > 80) return res.status(400).json({ error: 'The event title must be 80 characters or fewer.' });
+    if (end && end <= start) return res.status(400).json({ error: 'The end date/time must be after the start date/time.' });
+    const reminderMinutes = Number(req.body.reminderMinutes ?? 15);
+    const allowedReminders = [0, 5, 15, 30, 60, 1440];
+    if (!allowedReminders.includes(reminderMinutes)) return res.status(400).json({ error: 'Choose a valid reminder.' });
+    const allowedCategories = ['meeting', 'work', 'deadline', 'personal', 'holiday'];
+    const category = allowedCategories.includes(req.body.category) ? req.body.category : 'meeting';
+    const sharedWith = [...new Set(Array.isArray(req.body.sharedWith) ? req.body.sharedWith : req.body.sharedWith ? [req.body.sharedWith] : [])];
+    const event = await Event.update(existing.id, {
+      title, startsAt: start.toISOString(), endsAt: end?.toISOString() || null,
+      description: String(req.body.description || '').trim(), location: String(req.body.location || '').trim(),
+      reminderMinutes, sharedWith, category, allDay: req.body.allDay === true
+    });
+    const newlyShared = sharedWith.filter((id) => !existing.shared_with.includes(id));
+    if (newlyShared.length) {
+      const notifications = await Notification.insertMany(newlyShared.map((recipient) => ({
+        recipient,
+        title: 'Event shared with you',
+        message: `${req.session.userName} updated "${event.title}"`,
+        link: '/dashboard'
+      })));
+      notifications.forEach((notification) => req.app.get('io').to(`user:${notification.recipient}`).emit('notification:new', notification));
+    }
+    res.json(event);
+  } catch (error) { next(error); }
+});
+router.delete('/api/events/:id', async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event not found.' });
+    if (event.owner_id !== req.session.userId) return res.status(403).json({ error: 'Only the event owner can delete it.' });
+    await Event.remove(event.id);
+    res.status(204).send();
   } catch (error) { next(error); }
 });
 router.post('/resources/:id/share', async (req, res, next) => {

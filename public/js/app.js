@@ -247,6 +247,7 @@ const calendarGrid = document.getElementById('calendarGrid');
 if (calendarGrid) {
   let visibleMonth = new Date();
   let events = [];
+  let selectedDay = null;
   visibleMonth.setDate(1);
 
   const pad = (value) => String(value).padStart(2, '0');
@@ -272,8 +273,37 @@ if (calendarGrid) {
     return `${minutes}m`;
   }
 
+  function openEventEditor(event = null) {
+    const form = document.getElementById('scheduleForm');
+    form.hidden = false;
+    document.getElementById('eventId').value = event?.id || '';
+    document.getElementById('eventTitle').value = event?.title || '';
+    document.getElementById('eventDescription').value = event?.description || '';
+    document.getElementById('eventLocation').value = event?.location || '';
+    document.getElementById('eventStartsAt').value = event ? toLocalInput(new Date(event.starts_at)) : '';
+    document.getElementById('eventEndsAt').value = event?.ends_at ? toLocalInput(new Date(event.ends_at)) : '';
+    document.getElementById('eventReminderMinutes').value = String(event?.reminder_minutes ?? 15);
+    document.getElementById('eventCategory').value = event?.category || 'meeting';
+    document.getElementById('eventAllDay').checked = event?.all_day === true;
+    form.querySelectorAll('[name="eventAttendees"]').forEach((checkbox) => {
+      checkbox.checked = Boolean(event?.shared_with?.includes(checkbox.value));
+    });
+    document.getElementById('deleteEvent').hidden = !event;
+    document.querySelector('#scheduleForm button[type="submit"]').textContent = event ? 'Update event' : (ui.saveEvent || 'Save event');
+    document.getElementById('eventTitle').focus();
+  }
+
+  function resetEventEditor() {
+    document.getElementById('scheduleForm').reset();
+    document.getElementById('eventId').value = '';
+    document.getElementById('deleteEvent').hidden = true;
+    document.querySelector('#scheduleForm button[type="submit"]').textContent = ui.saveEvent || 'Save event';
+  }
+
   function renderSchedule() {
-    const upcoming = events.filter((event) => new Date(event.starts_at).getTime() >= Date.now())
+    const upcoming = events.filter((event) => selectedDay
+      ? dateKey(new Date(event.starts_at)) === selectedDay
+      : new Date(event.starts_at).getTime() >= Date.now())
       .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
     document.getElementById('scheduleCount').textContent = upcoming.length;
     const list = document.getElementById('scheduleList');
@@ -289,6 +319,7 @@ if (calendarGrid) {
       const start = new Date(event.starts_at);
       const item = document.createElement('article');
       item.className = 'schedule-item';
+      item.classList.add(`event-category-${event.category || 'meeting'}`);
       const date = document.createElement('div');
       date.className = 'schedule-date';
       date.innerHTML = `<strong>${start.getDate()}</strong><span>${start.toLocaleDateString([], { month: 'short' })}</span>`;
@@ -303,7 +334,20 @@ if (calendarGrid) {
       countdown.dataset.startsAt = event.starts_at;
       countdown.textContent = countdownText(event.starts_at);
       details.append(title, time, countdown);
+      const action = document.createElement('button');
+      action.type = 'button';
+      action.className = 'event-action';
+      action.textContent = String(event.owner_id) === window.CURRENT_USER_ID ? 'Edit' : 'View';
+      action.setAttribute('aria-label', `${action.textContent} ${event.title}`);
+      if (String(event.owner_id) !== window.CURRENT_USER_ID) {
+        action.addEventListener('click', () => {
+          alert(`${event.title}\n${new Date(event.starts_at).toLocaleString()}${event.location ? `\n${event.location}` : ''}${event.description ? `\n\n${event.description}` : ''}`);
+        }, { once: true });
+      } else {
+        action.addEventListener('click', () => openEventEditor(event));
+      }
       item.append(date, details);
+      item.append(action);
       list.appendChild(item);
     });
   }
@@ -336,11 +380,20 @@ if (calendarGrid) {
       button.textContent = day;
       if (cellDate.getMonth() !== month) button.classList.add('muted-day');
       if (key === dateKey(new Date())) button.classList.add('today');
-      if (events.some((event) => dateKey(new Date(event.starts_at)) === key)) button.classList.add('has-event');
+      const dayEvents = events.filter((event) => dateKey(new Date(event.starts_at)) === key);
+      if (dayEvents.length) {
+        button.classList.add('has-event');
+        button.setAttribute('title', `${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}`);
+        const count = document.createElement('span');
+        count.className = 'calendar-event-count';
+        count.textContent = dayEvents.length > 1 ? dayEvents.length : '';
+        button.appendChild(count);
+      }
       button.addEventListener('click', () => {
-        document.getElementById('scheduleForm').hidden = false;
-        document.getElementById('eventStartsAt').value = toLocalInput(new Date(year, cellDate.getMonth(), day, 9));
-        document.getElementById('eventTitle').focus();
+        selectedDay = key;
+        calendarGrid.querySelectorAll('.selected-day').forEach((dayButton) => dayButton.classList.remove('selected-day'));
+        button.classList.add('selected-day');
+        renderSchedule();
       });
       calendarGrid.appendChild(button);
     }
@@ -354,10 +407,33 @@ if (calendarGrid) {
     visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
     renderCalendar();
   });
+  document.getElementById('todayMonth').addEventListener('click', () => {
+    visibleMonth = new Date();
+    visibleMonth.setDate(1);
+    selectedDay = null;
+    renderCalendar();
+    renderSchedule();
+  });
   document.getElementById('toggleScheduleForm').addEventListener('click', () => {
     const form = document.getElementById('scheduleForm');
     form.hidden = !form.hidden;
-    if (!form.hidden) document.getElementById('eventTitle').focus();
+    if (!form.hidden) openEventEditor();
+  });
+  document.getElementById('cancelEventEdit').addEventListener('click', () => {
+    resetEventEditor();
+    document.getElementById('scheduleForm').hidden = true;
+  });
+  document.getElementById('deleteEvent').addEventListener('click', async () => {
+    const eventId = document.getElementById('eventId').value;
+    if (!eventId || !window.confirm('Delete this event permanently?')) return;
+    const response = await fetch(`/api/events/${eventId}`, { method: 'DELETE' });
+    if (!response.ok) {
+      alert((await response.json()).error || 'Could not delete event.');
+      return;
+    }
+    resetEventEditor();
+    document.getElementById('scheduleForm').hidden = true;
+    await loadEvents();
   });
   document.getElementById('scheduleForm').addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -370,8 +446,9 @@ if (calendarGrid) {
       if (Number.isNaN(start.getTime())) throw new Error('Choose a valid start date and time.');
       const endsAt = document.getElementById('eventEndsAt').value;
       if (endsAt && new Date(endsAt) <= start) throw new Error('End date and time must be after the start date and time.');
-      const response = await fetch('/api/events', {
-        method: 'POST',
+      const eventId = document.getElementById('eventId').value;
+      const response = await fetch(eventId ? `/api/events/${eventId}` : '/api/events', {
+        method: eventId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: document.getElementById('eventTitle').value,
@@ -379,7 +456,10 @@ if (calendarGrid) {
           location: document.getElementById('eventLocation').value,
           startsAt,
           endsAt,
-          reminderMinutes: document.getElementById('eventReminderMinutes').value
+          reminderMinutes: Number(document.getElementById('eventReminderMinutes').value),
+          category: document.getElementById('eventCategory').value,
+          allDay: document.getElementById('eventAllDay').checked,
+          sharedWith: [...document.querySelectorAll('[name="eventAttendees"]:checked')].map((input) => input.value)
         })
       });
       if (!response.ok) throw new Error((await response.json()).error || ui.saveEvent || 'Could not save event.');

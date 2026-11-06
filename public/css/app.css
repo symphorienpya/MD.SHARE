@@ -293,6 +293,35 @@
   transform:translateX(-50%);
 }
 
+.calendar-day.selected-day{
+  box-shadow:inset 0 0 0 2px var(--accent);
+}
+
+.calendar-event-count{
+  position:absolute;
+  right:5px;
+  top:5px;
+  min-width:16px;
+  height:16px;
+  padding:0 3px;
+  border-radius:8px;
+  background:#edf7f4;
+  color:var(--accent-dark);
+  font-size:.65rem;
+  font-weight:800;
+  line-height:16px;
+}
+
+.today-button{
+  height:34px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:white;
+  padding:0 10px;
+  color:var(--ink);
+  font-weight:700;
+}
+
 .schedule-form{
   display:grid;
   gap:10px;
@@ -324,6 +353,67 @@
   gap:12px;
   padding:12px 0;
   border-bottom:1px solid var(--line);
+}
+
+.schedule-item.event-category-work{border-left:3px solid #6e8dbb;}
+.schedule-item.event-category-deadline{border-left:3px solid #c96969;}
+.schedule-item.event-category-personal{border-left:3px solid #9a78b8;}
+.schedule-item.event-category-holiday{border-left:3px solid #d0a84a;}
+.schedule-item.event-category-meeting{border-left:3px solid var(--accent);}
+
+.event-action{
+  margin-left:auto;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:.78rem;
+  font-weight:800;
+}
+
+.event-form-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:12px;
+  align-items:end;
+}
+
+.all-day-toggle{
+  display:flex !important;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  height:38px;
+}
+
+.event-attendees{
+  max-height:160px;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:10px;
+}
+
+.event-attendees label{
+  grid-template-columns:auto 1fr;
+  align-items:center;
+}
+
+.event-attendees small{
+  display:block;
+  color:var(--muted);
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.event-form-actions{
+  display:flex;
+  gap:8px;
+}
+
+.btn-danger{
+  margin-left:auto;
+  border:1px solid #d7a7a7;
+  background:white;
+  color:#a94545;
 }
 
 .schedule-date{

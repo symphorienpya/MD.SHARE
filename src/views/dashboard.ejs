@@ -35,6 +35,7 @@
       <div class="card-heading">
         <div><p class="eyebrow"><%= t('calendar') %></p><h2><%= t('planMonth') %></h2></div>
         <div class="calendar-controls">
+          <button type="button" class="today-button" id="todayMonth">Today</button>
           <button type="button" class="icon-button" id="previousMonth" aria-label="Previous month">‹</button>
           <button type="button" class="icon-button" id="nextMonth" aria-label="Next month">›</button>
         </div>
@@ -50,13 +51,23 @@
         <button type="button" class="text-button" id="toggleScheduleForm"><%= t('addEvent') %></button>
       </div>
       <form class="schedule-form" id="scheduleForm" hidden>
+        <input type="hidden" id="eventId">
         <label><%= t('eventTitle') %><input class="form-control" id="eventTitle" maxlength="80" required></label>
         <label><%= t('description') %><textarea class="form-control" id="eventDescription" maxlength="500" rows="2"></textarea></label>
         <label><%= t('location') %><input class="form-control" id="eventLocation" maxlength="120"></label>
+        <div class="event-form-row">
+          <label>Category<select class="form-select" id="eventCategory"><option value="meeting">Meeting</option><option value="work">Work</option><option value="deadline">Deadline</option><option value="personal">Personal</option><option value="holiday">Holiday</option></select></label>
+          <label class="all-day-toggle"><input type="checkbox" id="eventAllDay"> All day</label>
+        </div>
         <label><%= t('starts') %><input class="form-control" id="eventStartsAt" type="datetime-local" required></label>
         <label><%= t('ends') %><input class="form-control" id="eventEndsAt" type="datetime-local"></label>
-        <label><%= t('reminder') %><select class="form-select" id="eventReminderMinutes" disabled><option value="15">15 <%= t('minutesBefore') %></option></select></label>
-        <button class="btn btn-primary" type="submit"><%= t('saveEvent') %></button>
+        <label><%= t('reminder') %><select class="form-select" id="eventReminderMinutes"><option value="0">No reminder</option><option value="5">5 <%= t('minutesBefore') %></option><option value="15" selected>15 <%= t('minutesBefore') %></option><option value="30">30 <%= t('minutesBefore') %></option><option value="60"><%= t('hourBefore') %></option><option value="1440"><%= t('dayBefore') %></option></select></label>
+        <fieldset class="event-attendees"><legend>Invite team members</legend>
+          <% users.filter(user => user._id !== currentUser.id).forEach(user => { %>
+            <label><input type="checkbox" name="eventAttendees" value="<%= user._id %>"> <span><%= user.name %><small><%= user.email %></small></span></label>
+          <% }) %>
+        </fieldset>
+        <div class="event-form-actions"><button class="btn btn-primary" type="submit"><%= t('saveEvent') %></button><button class="btn btn-secondary" id="cancelEventEdit" type="button">Cancel</button><button class="btn btn-danger" id="deleteEvent" type="button" hidden>Delete</button></div>
       </form>
       <div class="schedule-list" id="scheduleList">
         <div class="schedule-empty">No events scheduled yet.</div>
