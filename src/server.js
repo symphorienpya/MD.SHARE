@@ -62,11 +62,20 @@ io.on('connection', async (socket) => {
   if (!session?.userId) return socket.disconnect();
   socket.join('users');
   socket.join(`user:${session.userId}`);
-  const memberTeams = await Team.findForUser(session.userId);
+  let memberTeams = [];
+  try {
+    memberTeams = await Team.findForUser(session.userId);
+  } catch (error) {
+    console.error('Could not load team rooms:', error.message);
+  }
   memberTeams.forEach((team) => socket.join(`team:${team._id}`));
   socket.data.userId = session.userId;
   socket.data.userName = session.userName;
-  io.to('users').emit('presence:update', await onlineUsers(io));
+  try {
+    io.to('users').emit('presence:update', await onlineUsers(io));
+  } catch (error) {
+    console.error('Could not load online users:', error.message);
+  }
   socket.on('chat:send', async ({ body, recipient, teamId, replyToId }) => {
     const cleanBody = String(body || '').trim().slice(0, 2000);
     if (!cleanBody) return;
@@ -90,7 +99,13 @@ io.on('connection', async (socket) => {
       io.to(`user:${recipientId}`).emit('message:new', message);
     } else io.to('users').emit('chat:message', message);
   });
-  socket.on('disconnect', () => setTimeout(async () => io.to('users').emit('presence:update', await onlineUsers(io)), 50));
+  socket.on('disconnect', () => setTimeout(async () => {
+    try {
+      io.to('users').emit('presence:update', await onlineUsers(io));
+    } catch (error) {
+      console.error('Could not refresh online users:', error.message);
+    }
+  }, 50));
 });
 
 async function onlineUsers(ioServer) {
