@@ -11,13 +11,16 @@
   <section class="conversation">
     <div class="conversation-header"><div><p class="eyebrow"><%= locale === 'fr' ? 'Équipe privée' : 'Private team' %></p><h1><%= team.name %></h1></div><span id="teamConnectionState" class="connection-state"><%= t('connecting') %></span></div>
     <div id="messageList" class="message-list" data-team-id="<%= team._id %>" aria-live="polite">
-      <% messages.forEach(message => { %><article class="message<%= String(message.sender._id) === String(currentUser.id) ? ' own' : '' %>"><strong><%= message.sender.name %></strong><p><%= message.body %></p><time><%= message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></time></article><% }) %>
+      <% messages.forEach(message => { %><article class="message<%= String(message.sender._id) === String(currentUser.id) ? ' own' : '' %>" data-message-id="<%= message._id %>"><strong><%= message.sender.name %></strong><% if (message.replyToId) { %><small class="reply-context"><%= locale === 'fr' ? 'Réponse à un message' : 'Reply to a message' %></small><% } %><p><%= message.body %></p><time><%= message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></time><button class="reply-button" type="button" data-reply-id="<%= message._id %>"><%= locale === 'fr' ? 'Répondre' : 'Reply' %></button></article><% }) %>
     </div>
+    <div id="teamReplyContext" class="reply-context hidden"></div>
+    <input id="teamReplyToId" type="hidden">
     <form id="teamChatForm" class="chat-form"><input id="teamChatInput" class="form-control" maxlength="2000" placeholder="<%= t('writeMessage') %>" autocomplete="off"><button class="btn btn-primary" type="submit"><%= t('send') %></button></form>
     <form id="teamFileForm" class="chat-form" enctype="multipart/form-data">
       <input class="form-control" type="file" name="file" required>
       <button class="btn btn-primary" type="submit"><%= locale === 'fr' ? 'Partager le fichier' : 'Share file' %></button>
     </form>
+    <% if (files.length) { %><div class="team-file-list"><h2><%= locale === 'fr' ? 'Fichiers de l’équipe' : 'Team files' %></h2><% files.forEach(file => { %><div class="team-file-row"><span><%= file.title %></span><a class="btn btn-secondary" href="/files/<%= file._id %>?download=1"><%= locale === 'fr' ? 'Télécharger' : 'Download' %></a></div><% }) %></div><% } %>
   </section>
 </main>
 </body></html>

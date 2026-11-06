@@ -7,7 +7,8 @@ function throwOnError(error) {
 }
 
 function mapMessage(row, sender) {
-  return { ...row, _id: row.id, sender, recipient: row.recipient_id, team: row.team_id, teamId: row.team_id, createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at) };
+  return { ...row, _id: row.id, sender, recipient: row.recipient_id, team: row.team_id, teamId: row.team_id,
+    replyToId: row.reply_to_id || null, createdAt: new Date(row.created_at), updatedAt: new Date(row.updated_at) };
 }
 
 async function hydrate(rows) {
@@ -20,9 +21,9 @@ async function hydrate(rows) {
 }
 
 module.exports = {
-  async create({ sender, recipient, body, teamId }) {
+  async create({ sender, recipient, body, teamId, replyToId }) {
     const { data, error } = await supabase.from('messages').insert({
-      sender_id: sender, recipient_id: recipient || null, body, team_id: teamId || null
+      sender_id: sender, recipient_id: recipient || null, body, team_id: teamId || null, reply_to_id: replyToId || null
     }).select('*').single();
     throwOnError(error);
     const users = await User.find({ _id: { $in: [sender] } });
@@ -39,5 +40,11 @@ module.exports = {
     const { data, error } = await supabase.from('messages').select('*').eq('team_id', teamId).order('created_at', { ascending: true }).limit(200);
     throwOnError(error);
     return hydrate(data || []);
+  },
+  async findById(id) {
+    const { data, error } = await supabase.from('messages').select('*').eq('id', id).maybeSingle();
+    throwOnError(error);
+    if (!data) return null;
+    return (await hydrate([data]))[0];
   }
 };

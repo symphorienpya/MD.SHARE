@@ -53,11 +53,12 @@ router.get('/teams/:id', async (req, res, next) => {
     if (!team || !(await Team.isMember(team._id, req.session.userId))) return res.status(403).render('error', { title: 'Access denied', message: 'You are not a member of this team.' });
     const memberRows = await Team.members(team._id);
     const memberIds = memberRows.map((member) => member.user_id);
-    const [users, messages] = await Promise.all([
+    const [users, messages, files] = await Promise.all([
       User.find({ active: true, _id: { $in: memberIds } }),
-      Message.findForTeam(team._id)
+      Message.findForTeam(team._id),
+      Post.findForTeam(team._id)
     ]);
-    res.render('team-chat', { title: team.name, team, users, messages });
+    res.render('team-chat', { title: team.name, team, users, messages, files });
   } catch (error) { next(error); }
 });
 router.get('/teams/:id/invite', async (req, res, next) => {
@@ -83,6 +84,7 @@ router.get('/team-logo/:id', async (req, res, next) => {
   try {
     const team = await Team.findById(req.params.id);
     if (!team?.logo) return res.status(404).send('Team logo unavailable');
+    if (!(await Team.isMember(team._id, req.session.userId))) return res.status(403).send('Team membership is required.');
     const file = path.join(__dirname, '../../uploads', path.basename(team.logo));
     if (!fs.existsSync(file)) return res.status(404).send('Team logo unavailable');
     res.sendFile(file);
@@ -104,12 +106,6 @@ router.post('/teams/:id/files', teamUpload.single('file'), async (req, res, next
     if (req.file) fs.unlink(req.file.path, () => {});
     next(error);
   }
-});
-router.post('/teams/:id/files', async (req, res, next) => {
-  try {
-    if (!(await Team.isMember(req.params.id, req.session.userId))) return res.status(403).json({ error: 'Team membership is required.' });
-    res.json({ teamId: req.params.id });
-  } catch (error) { next(error); }
 });
 router.post('/notifications/read', async (req, res, next) => {
   try { await Notification.markAllRead(req.session.userId); res.redirect('/dashboard'); }

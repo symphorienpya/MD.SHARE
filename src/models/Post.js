@@ -46,6 +46,12 @@ module.exports = {
     const authors = await withAuthors([data]);
     return authors[0];
   },
+  async findForTeam(teamId) {
+    const { data, error } = await supabase.from('posts').select('*')
+      .eq('team_id', teamId).order('created_at', { ascending: true });
+    throwOnError(error);
+    return withAuthors(data || []);
+  },
   async create(values) {
     const row = {
       title: values.title, description: values.description || '', type: values.type, url: values.url || null,

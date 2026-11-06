@@ -67,12 +67,17 @@ io.on('connection', async (socket) => {
   socket.data.userId = session.userId;
   socket.data.userName = session.userName;
   io.to('users').emit('presence:update', await onlineUsers(io));
-  socket.on('chat:send', async ({ body, recipient, teamId }) => {
+  socket.on('chat:send', async ({ body, recipient, teamId, replyToId }) => {
     const cleanBody = String(body || '').trim().slice(0, 2000);
     if (!cleanBody) return;
     if (teamId) {
       if (!(await Team.isMember(teamId, session.userId))) return;
-      const message = await Message.create({ sender: session.userId, recipient: null, teamId, body: cleanBody });
+      const replyTo = String(replyToId || '');
+      if (replyTo) {
+        const parent = await Message.findById(replyTo);
+        if (!parent || String(parent.teamId) !== String(teamId)) return;
+      }
+      const message = await Message.create({ sender: session.userId, recipient: null, teamId, body: cleanBody, replyToId: replyTo || null });
       io.to(`team:${teamId}`).emit('team:message', message);
       return;
     }

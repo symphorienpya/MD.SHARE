@@ -155,23 +155,46 @@ const teamMessageList = document.getElementById('messageList[data-team-id]');
 const teamChatForm = document.getElementById('teamChatForm');
 if (teamChatForm && teamMessageList) {
   const teamId = teamMessageList.dataset.teamId;
+  const replyInput = document.getElementById('teamReplyToId');
+  const replyContext = document.getElementById('teamReplyContext');
+  function clearTeamReply() {
+    replyInput.value = '';
+    replyContext.classList.add('hidden');
+    replyContext.replaceChildren();
+  }
+  teamMessageList.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-reply-id]');
+    if (!button) return;
+    const message = button.closest('[data-message-id]');
+    replyInput.value = button.dataset.replyId;
+    replyContext.textContent = `${ui.reply || 'Reply'}: ${message.querySelector('strong')?.textContent || 'Member'}`;
+    replyContext.classList.remove('hidden');
+    document.getElementById('teamChatInput').focus();
+  });
   teamChatForm.addEventListener('submit', (event) => {
     event.preventEventDefault?.();
     event.preventDefault();
     const input = document.getElementById('teamChatInput');
     const body = input.value.trim();
     if (!body) return;
-    socket.emit('chat:send', { body, teamId });
+    socket.emit('chat:send', { body, teamId, replyToId: replyInput.value || null });
     input.value = '';
+    clearTeamReply();
   });
   socket.on('team:message', (message) => {
     const article = document.createElement('article');
-    article.className = 'message own';
+    article.className = `message ${String(message.sender?._id) === String(window.CURRENT_USER_ID) ? 'own' : ''}`;
+    article.dataset.messageId = message._id;
     const sender = document.createElement('strong');
     sender.textContent = message.sender?.name || 'Member';
     const body = document.createElement('p');
     body.textContent = message.body;
-    article.append(sender, body);
+    const replyButton = document.createElement('button');
+    replyButton.className = 'reply-button';
+    replyButton.type = 'button';
+    replyButton.dataset.replyId = message._id;
+    replyButton.textContent = ui.reply || 'Reply';
+    article.append(sender, body, replyButton);
     teamMessageList.append(article);
     teamMessageList.scrollTop = teamMessageList.scrollHeight;
   });

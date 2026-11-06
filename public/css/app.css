@@ -498,6 +498,11 @@
 .inbox-item strong,.inbox-item small{display:block}
 .inbox-item small{margin-top:4px;color:var(--muted)}
 .inbox-reply{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+.reply-button{margin-top:8px;padding:0;border:0;background:none;color:#2563eb;font-size:.78rem;cursor:pointer}
+.reply-context{display:block;margin:8px 0;color:#64748b;font-size:.78rem}
+.hidden{display:none !important}
+.team-file-list{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px}
+.team-file-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
 
 @media(max-width:900px){
   .dashboard-feature-grid{grid-template-columns:1fr}
