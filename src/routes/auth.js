@@ -18,7 +18,9 @@ router.post('/login', async (req, res, next) => {
       req.session.role = user.role;
       req.session.userName = user.name;
       req.session.mustChangePassword = user.mustChangePassword;
-      req.session.save((saveError) => saveError ? next(saveError) : res.redirect(user.mustChangePassword ? '/change-password' : '/dashboard'));
+      req.session.save((saveError) => saveError ? next(saveError) : res.redirect(
+        user.mustChangePassword ? '/change-password' : (user.role === 'admin' ? '/admin' : '/dashboard')
+      ));
     });
   } catch (error) { next(error); }
 });
