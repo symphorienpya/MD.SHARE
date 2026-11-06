@@ -6,6 +6,7 @@ const multer = require('multer');
 const User = require('../models/User');
 const Post = require('../models/Post');
 const Notification = require('../models/Notification');
+const Message = require('../models/Message');
 const Team = require('../models/Team');
 const { requireAdmin } = require('../middleware/auth');
 
@@ -86,6 +87,12 @@ router.post('/teams', teamUpload.single('logo'), async (req, res, next) => {
       const user = await User.findOne({ email });
       if (!user) continue;
       await Team.invite(team._id, user._id, req.session.userId);
+      await Message.create({
+        sender: req.session.userId,
+        recipient: user._id,
+        teamId: team._id,
+        body: `${req.session.userName} invited you to join the team "${team.name}".`
+      });
       const [notification] = await Notification.insertMany([{
         recipient: user._id, title: 'Team invitation',
         message: `${req.session.userName} invited you to join ${team.name}`,

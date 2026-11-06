@@ -48,6 +48,18 @@ function openInbox(type, inbox) {
     article.append(title, body, time);
     if (messages && String(item.recipient_id || item.recipient) === String(window.CURRENT_USER_ID)) {
       const senderId = item.sender_id || item.sender?._id;
+      const teamId = item.team_id || item.teamId;
+      if (teamId && /invited you to join|invité à rejoindre/i.test(item.body || '')) {
+        const accept = document.createElement('button');
+        accept.className = 'btn btn-primary';
+        accept.type = 'button';
+        accept.textContent = localeAcceptText();
+        accept.addEventListener('click', async () => {
+          const response = await fetch(`/teams/${teamId}/invite/accept`, { method: 'POST' });
+          if (response.ok || response.redirected) location.href = `/teams/${teamId}`;
+        });
+        article.append(accept);
+      }
       if (senderId) {
         const form = document.createElement('form');
         form.className = 'inbox-reply';
@@ -72,6 +84,10 @@ function openInbox(type, inbox) {
     content.append(article);
   });
   inboxDialog.showModal();
+}
+
+function localeAcceptText() {
+  return document.documentElement.lang === 'fr' ? 'Accepter' : 'Accept';
 }
 
 ['message', 'notification'].forEach((type) => {

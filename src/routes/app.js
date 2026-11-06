@@ -64,12 +64,18 @@ router.get('/teams/:id', async (req, res, next) => {
 router.get('/teams/:id/invite', async (req, res, next) => {
   try {
     const team = await Team.findById(req.params.id);
+    if (!team || !(await Team.hasInvitation(team._id, req.session.userId))) {
+      return res.redirect('/dashboard');
+    }
     res.render('team-invite', { title: 'Team invitation', team });
   } catch (error) { next(error); }
 });
 router.post('/teams/:id/invite/accept', async (req, res, next) => {
   try {
     await Team.respondToInvite(req.params.id, req.session.userId, 'accepted');
+    req.app.get('io').sockets.sockets.forEach((socket) => {
+      if (socket.data.userId === req.session.userId) socket.join(`team:${req.params.id}`);
+    });
     req.app.get('io').to(`team:${req.params.id}`).emit('team:membership', { teamId: req.params.id, userId: req.session.userId });
     res.redirect(`/teams/${req.params.id}`);
   } catch (error) { next(error); }

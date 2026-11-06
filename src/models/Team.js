@@ -60,6 +60,12 @@ module.exports = {
     throwOnError(error);
     return Boolean(data);
   },
+  async hasInvitation(teamId, userId) {
+    const { data, error } = await supabase.from('team_members').select('id')
+      .eq('team_id', teamId).eq('user_id', userId).eq('status', 'invited').maybeSingle();
+    throwOnError(error);
+    return Boolean(data);
+  },
   async members(teamId) {
     const { data, error } = await supabase.from('team_members').select('user_id, role, status').eq('team_id', teamId).eq('status', 'accepted');
     throwOnError(error);
