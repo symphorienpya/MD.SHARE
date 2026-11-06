@@ -18,7 +18,7 @@ Private, administrator-managed resource sharing and team communication platform 
 2. Create the tables in `supabase/schema.sql` using the Supabase SQL Editor. If an existing database was created before mobile/profile support was added, run `supabase/migrations/20261105_add_user_profile_columns.sql` too. The migration also reloads PostgREST's schema cache.
 3. For existing databases that do not yet contain the scheduling tables, run `supabase/migrations/20261105_add_events.sql` in the Supabase SQL Editor. This adds persistent events, countdown support data, and reminder scheduling.
 3. Copy `.env.example` to `.env`, then set the Supabase URL and service-role key and a strong `SESSION_SECRET`.
-   The publishable key may be used for this configuration if Supabase row-level security is disabled by the included schema.
+   Use the privileged server key (`SUPABASE_SECRET_KEY` or legacy `SUPABASE_SERVICE_ROLE_KEY`). Do not use a publishable/anon key because this application writes users and team records server-side. If tables already have RLS enabled, run `supabase/migrations/20261106_disable_platform_rls.sql`.
 4. Install dependencies: `npm install`
 5. Create the initial administrator: `npm run seed`
 6. Start the platform: `npm run dev`

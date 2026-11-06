@@ -1,8 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const url = process.env.SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  || process.env.SUPABASE_SECRET_KEY
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceKey = serviceRoleKey && !serviceRoleKey.startsWith('sb_publishable_') ? serviceRoleKey : null;
+const publishableKey = serviceRoleKey?.startsWith('sb_publishable_') ? serviceRoleKey : null;
+const key = serviceKey || publishableKey || process.env.SUPABASE_SECRET_KEY
   || process.env.SUPABASE_KEY;
 
 if (!url || !key) {
