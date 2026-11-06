@@ -1,0 +1,22 @@
+<%- include('../partials/head') %><%- include('../partials/nav') %>
+<main class="page-shell">
+  <div class="page-heading"><div><p class="eyebrow"><%= t('administration') %></p><h1><%= locale === 'fr' ? 'Équipes' : 'Teams' %></h1></div></div>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <section class="admin-layout">
+    <form method="post" action="/admin/teams" enctype="multipart/form-data" class="form-panel">
+      <h2><%= locale === 'fr' ? 'Créer une équipe' : 'Create team' %></h2>
+      <label><%= locale === 'fr' ? 'Nom de l’équipe' : 'Team name' %><input class="form-control" name="name" required></label>
+      <label><%= locale === 'fr' ? 'Logo de l’équipe' : 'Team logo' %><input class="form-control" type="file" name="logo" accept="image/jpeg,image/png,image/webp"></label>
+      <label><%= locale === 'fr' ? 'Adresses e-mail, séparées par des virgules' : 'Email addresses, separated by commas' %><textarea class="form-control" name="emails" rows="5"></textarea></label>
+      <button class="btn btn-primary"><%= locale === 'fr' ? 'Créer et inviter' : 'Create and invite' %></button>
+    </form>
+    <div class="table-panel">
+      <% if (!teams.length) { %><p class="muted"><%= locale === 'fr' ? 'Aucune équipe créée.' : 'No teams created.' %></p><% } %>
+      <% teams.forEach(team => { %><article class="team-admin-row">
+        <% if (team.logo) { %><img src="/team-logo/<%= team._id %>" alt="" class="team-logo"><% } else { %><span class="team-logo team-logo-fallback"><%= team.name.charAt(0).toUpperCase() %></span><% } %>
+        <strong><%= team.name %></strong>
+      </article><% }) %>
+    </div>
+  </section>
+</main>
+</body></html>

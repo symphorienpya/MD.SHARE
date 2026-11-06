@@ -1,0 +1,12 @@
+<%- include('partials/head') %><%- include('partials/nav') %>
+<main class="chat-shell">
+  <aside class="people-panel"><p class="eyebrow"><%= t('connectedTeam') %></p><div id="onlineUsers"><% users.forEach(user => { %><div class="person-row"><span class="status-dot"></span><div><strong><%= user.name %></strong><small><%= user.role %></small></div></div><% }) %></div></aside>
+  <section class="conversation">
+    <div class="conversation-header"><div><p class="eyebrow"><%= t('teamChannel') %></p><h1><%= t('organizationChat') %></h1></div><span id="connectionState" class="connection-state"><%= t('connecting') %></span></div>
+    <div id="messageList" class="message-list" aria-live="polite">
+      <% messages.forEach(message => { %><article class="message<%= String(message.sender._id) === String(currentUser.id) ? ' own' : '' %>"><strong><%= message.sender.name %></strong><p><%= message.body %></p><time><%= message.createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></time></article><% }) %>
+    </div>
+    <form id="chatForm" class="chat-form"><input id="chatInput" class="form-control" maxlength="2000" placeholder="<%= t('writeMessage') %>" autocomplete="off"><button class="btn btn-primary" type="submit"><%= t('send') %></button></form>
+  </section>
+</main>
+</body></html>

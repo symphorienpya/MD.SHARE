@@ -1,0 +1,10 @@
+<%- include('../partials/head') %><%- include('../partials/nav') %>
+<main class="page-shell">
+  <div class="page-heading"><div><p class="eyebrow"><%= t('administration') %></p><h1><%= t('sharedResources') %></h1></div></div>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <section class="admin-layout">
+    <form method="post" action="/admin/posts" enctype="multipart/form-data" class="form-panel"><h2><%= t('publishResource') %></h2><label><%= t('title') %><input class="form-control" name="title" required></label><label><%= t('description') %><textarea class="form-control" name="description" rows="3"></textarea></label><label><%= t('type') %><select class="form-select" name="type" id="postType"><option value="document"><%= t('document') %></option><option value="video"><%= t('video') %></option><option value="link"><%= t('link') %></option></select></label><label id="urlField" hidden><%= t('url') %><input class="form-control" type="url" name="url"></label><label id="fileField"><%= t('file') %><input class="form-control" type="file" name="file"></label><button class="btn btn-primary"><%= t('publish') %></button></form>
+    <div class="table-panel"><div class="table-responsive"><table class="table align-middle"><thead><tr><th><%= t('resource') %></th><th><%= t('type') %></th><th><%= t('published') %></th><th></th></tr></thead><tbody><% posts.forEach(post => { %><tr><td><strong><%= post.title %></strong><small class="d-block text-muted"><%= post.description %></small></td><td><%= post.type %></td><td><%= post.createdAt.toLocaleDateString() %></td><td><form method="post" action="/admin/posts/<%= post._id %>/delete"><button class="text-button danger"><%= t('delete') %></button></form></td></tr><% }) %></tbody></table></div></div>
+  </section>
+</main>
+<script>const type=document.getElementById('postType'),url=document.getElementById('urlField'),file=document.getElementById('fileField');type.addEventListener('change',()=>{url.hidden=type.value!=='link';file.hidden=type.value==='link';});</script></body></html>

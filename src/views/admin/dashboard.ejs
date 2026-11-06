@@ -1,0 +1,6 @@
+<%- include('../partials/head') %><%- include('../partials/nav') %>
+<main class="page-shell">
+  <div class="page-heading"><div><p class="eyebrow"><%= t('controlCenter') %></p><h1><%= t('administration') %></h1></div></div>
+  <nav class="section-nav"><a href="/admin/users"><%= t('manageUsers') %></a><a href="/admin/posts"><%= t('manageResources') %></a><a href="/admin/teams"><%= locale === 'fr' ? 'Équipes' : 'Teams' %></a></nav>
+  <section class="stat-grid"><article><span><%= t('totalUsers') %></span><strong><%= stats.users %></strong></article><article><span><%= t('sharedDocuments') %></span><strong><%= stats.posts %></strong></article></section>
+</main></body></html>

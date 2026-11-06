@@ -1,0 +1,13 @@
+<%- include('partials/head') %><%- include('partials/nav') %>
+<main class="auth-shell">
+  <section class="auth-panel narrow text-center">
+    <p class="eyebrow"><%= locale === 'fr' ? 'Invitation d’équipe' : 'Team invitation' %></p>
+    <h1><%= team ? team.name : '' %></h1>
+    <p class="muted"><%= locale === 'fr' ? 'Vous avez été invité à rejoindre cette équipe.' : 'You have been invited to join this team.' %></p>
+    <div class="invitation-actions">
+      <form method="post" action="/teams/<%= team._id %>/invite/accept"><button class="btn btn-primary"><%= locale === 'fr' ? 'Accepter' : 'Accept' %></button></form>
+      <form method="post" action="/teams/<%= team._id %>/invite/decline"><button class="btn btn-outline-dark"><%= locale === 'fr' ? 'Refuser' : 'Decline' %></button></form>
+    </div>
+  </section>
+</main>
+</body></html>

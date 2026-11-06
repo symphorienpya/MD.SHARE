@@ -1,0 +1,98 @@
+<%- include('partials/head') %><%- include('partials/nav') %>
+<main class="page-shell dashboard-shell">
+  <div class="page-heading dashboard-heading">
+    <div>
+      <p class="eyebrow"><%= t('workspaceOverview') %></p>
+      <h1><span id="dayGreeting"><%= t('goodMorning') %></span>, <%= currentUser.name %></h1>
+      <p class="dashboard-subtitle"><%= t('stayOrganized') %></p>
+    </div>
+    <div class="dashboard-actions">
+      <div class="notification-count"><%= notifications.filter(n => !n.read).length %> <%= t('unread') %></div>
+      <a class="btn btn-primary" href="/chat"><%= t('openChat') %></a>
+    </div>
+  </div>
+  <% if (notifications.filter(n => !n.read).length) { %>
+  <div class="notice-bar"><span><%= t('sharedActivity') %></span><form method="post" action="/notifications/read"><button class="text-button"><%= t('markRead') %></button></form></div>
+  <% } %>
+
+  <% if (teams && teams.length) { %>
+  <section class="dashboard-teams" aria-label="<%= locale === 'fr' ? 'Mes équipes' : 'My teams' %>">
+    <% teams.forEach(team => { %><a class="team-card" href="/teams/<%= team._id %>">
+      <% if (team.logo) { %><img src="/team-logo/<%= team._id %>" alt="" class="team-logo"><% } else { %><span class="team-logo team-logo-fallback"><%= team.name.charAt(0).toUpperCase() %></span><% } %>
+      <span><strong><%= team.name %></strong><small><%= locale === 'fr' ? 'Ouvrir l’équipe' : 'Open team' %></small></span>
+    </a><% }) %>
+  </section>
+  <% } %>
+
+  <section class="dashboard-stat-grid" aria-label="Workspace summary">
+    <article class="dashboard-stat"><span class="stat-icon stat-icon-blue">R</span><div><strong><%= posts.length %></strong><span><%= t('sharedResources') %></span></div></article>
+    <article class="dashboard-stat"><span class="stat-icon stat-icon-green">S</span><div><strong id="scheduleCount">0</strong><span><%= t('scheduledEvents') %></span></div></article>
+    <article class="dashboard-stat"><span class="stat-icon stat-icon-purple">N</span><div><strong><%= notifications.filter(n => !n.read).length %></strong><span><%= t('unreadNotifications') %></span></div></article>
+  </section>
+
+  <section class="dashboard-feature-grid">
+    <article class="dashboard-card calendar-card">
+      <div class="card-heading">
+        <div><p class="eyebrow"><%= t('calendar') %></p><h2><%= t('planMonth') %></h2></div>
+        <div class="calendar-controls">
+          <button type="button" class="icon-button" id="previousMonth" aria-label="Previous month">‹</button>
+          <button type="button" class="icon-button" id="nextMonth" aria-label="Next month">›</button>
+        </div>
+      </div>
+      <div class="calendar-month" id="calendarMonth"></div>
+      <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </article>
+
+    <aside class="dashboard-card schedule-card">
+      <div class="card-heading">
+        <div><p class="eyebrow"><%= t('schedule') %></p><h2><%= t('upcoming') %></h2></div>
+        <button type="button" class="text-button" id="toggleScheduleForm"><%= t('addEvent') %></button>
+      </div>
+      <form class="schedule-form" id="scheduleForm" hidden>
+        <label><%= t('eventTitle') %><input class="form-control" id="eventTitle" maxlength="80" required></label>
+        <label><%= t('description') %><textarea class="form-control" id="eventDescription" maxlength="500" rows="2"></textarea></label>
+        <label><%= t('location') %><input class="form-control" id="eventLocation" maxlength="120"></label>
+        <label><%= t('starts') %><input class="form-control" id="eventStartsAt" type="datetime-local" required></label>
+        <label><%= t('ends') %><input class="form-control" id="eventEndsAt" type="datetime-local"></label>
+        <label><%= t('reminder') %><select class="form-select" id="eventReminderMinutes"><option value="15">15 <%= t('minutesBefore') %></option><option value="30">30 <%= t('minutesBefore') %></option><option value="60"><%= t('hourBefore') %></option><option value="1440"><%= t('dayBefore') %></option></select></label>
+        <button class="btn btn-primary" type="submit"><%= t('saveEvent') %></button>
+      </form>
+      <div class="schedule-list" id="scheduleList">
+        <div class="schedule-empty">No events scheduled yet.</div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="dashboard-resources">
+    <div class="section-heading"><div><p class="eyebrow"><%= t('library') %></p><h2><%= t('sharedResources') %></h2></div><a class="text-button" href="#resourceGrid"><%= t('viewAll') %></a></div>
+    <div class="resource-grid" id="resourceGrid">
+    <% if (!posts.length) { %><div class="empty-state"><h2><%= t('noResources') %></h2><p><%= t('resourcesEmpty') %></p></div><% } %>
+    <% posts.forEach(post => { %>
+    <article class="resource-card">
+      <div class="resource-meta"><span class="type-label"><%= post.type %></span><time><%= post.createdAt.toLocaleDateString() %></time></div>
+      <h2><%= post.title %></h2><p><%= post.description || 'Shared resource' %></p>
+      <div class="resource-author">Shared by <%= post.author ? post.author.name : 'Administration' %></div>
+      <% if (post.type === 'link') { %><a class="resource-action" href="<%= post.url %>" target="_blank" rel="noopener noreferrer">Open link →</a>
+      <% } else if (post.type === 'video' && post.mimeType && post.mimeType.startsWith('video/')) { %>
+      <video class="resource-video" controls preload="metadata"><source src="/files/<%= post._id %>" type="<%= post.mimeType %>"></video>
+      <% } else { %><a class="resource-action" href="/files/<%= post._id %>?download=1">Download <%= post.fileName || 'file' %> →</a><% } %>
+      <button type="button" class="share-button" data-share-post="<%= post._id %>" aria-label="<%= t('share') %> <%= post.title %>"><span aria-hidden="true">↗</span> <%= t('share') %></button>
+      <dialog class="share-dialog" id="share-dialog-<%= post._id %>">
+        <form method="dialog" class="share-form" data-share-form="<%= post._id %>">
+          <div class="card-heading"><div><p class="eyebrow"><%= t('shareResource') %></p><h2><%= t('shareResource') %></h2></div><button value="cancel" class="icon-button" aria-label="Close">×</button></div>
+          <label><%= t('chooseUsers') %></label>
+          <div class="share-users">
+            <% users.filter(user => user._id !== currentUser.id).forEach(user => { %>
+              <label class="share-user"><input type="checkbox" name="recipientIds" value="<%= user._id %>"> <span><strong><%= user.name %></strong><small><%= user.email %></small></span></label>
+            <% }) %>
+          </div>
+          <button type="submit" class="btn btn-primary"><%= t('shareNow') %></button>
+        </form>
+      </dialog>
+    </article>
+    <% }) %>
+    </div>
+  </section>
+</main>
+</body></html>
