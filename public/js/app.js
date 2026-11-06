@@ -364,6 +364,12 @@ if (calendarGrid) {
     const button = event.submitter;
     button.disabled = true;
     try {
+      const startsAt = document.getElementById('eventStartsAt').value;
+      if (!startsAt) throw new Error(ui.starts ? `${ui.starts} is required.` : 'Start date and time are required.');
+      const start = new Date(startsAt);
+      if (Number.isNaN(start.getTime())) throw new Error('Choose a valid start date and time.');
+      const endsAt = document.getElementById('eventEndsAt').value;
+      if (endsAt && new Date(endsAt) <= start) throw new Error('End date and time must be after the start date and time.');
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -371,8 +377,8 @@ if (calendarGrid) {
           title: document.getElementById('eventTitle').value,
           description: document.getElementById('eventDescription').value,
           location: document.getElementById('eventLocation').value,
-          startsAt: document.getElementById('eventStartsAt').value,
-          endsAt: document.getElementById('eventEndsAt').value,
+          startsAt,
+          endsAt,
           reminderMinutes: document.getElementById('eventReminderMinutes').value
         })
       });

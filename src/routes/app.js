@@ -143,6 +143,7 @@ router.post('/api/events', async (req, res, next) => {
     const start = new Date(startsAt);
     const end = endsAt ? new Date(endsAt) : null;
     if (!title || Number.isNaN(start.getTime())) return res.status(400).json({ error: 'A title and valid start date/time are required.' });
+    if (title.length > 80) return res.status(400).json({ error: 'The event title must be 80 characters or fewer.' });
     if (end && end <= start) return res.status(400).json({ error: 'The end date/time must be after the start date/time.' });
     const reminderMinutes = 15;
     const sharedWith = [...new Set(Array.isArray(req.body.sharedWith) ? req.body.sharedWith : req.body.sharedWith ? [req.body.sharedWith] : [])];

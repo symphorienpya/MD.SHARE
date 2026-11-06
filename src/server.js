@@ -54,6 +54,9 @@ app.use('/admin', adminRoutes);
 app.use((req, res) => res.status(404).render('error', { title: 'Page not found', message: 'The page you requested does not exist.' }));
 app.use((error, req, res, next) => {
   console.error(error);
+  if (req.path.startsWith('/api/') || req.path.startsWith('/teams/') && req.accepts(['html', 'json']) === 'json') {
+    return res.status(error.status || 500).json({ error: error.message || 'The request could not be completed.' });
+  }
   res.status(500).render('error', { title: 'Something went wrong', message: 'The request could not be completed.' });
 });
 

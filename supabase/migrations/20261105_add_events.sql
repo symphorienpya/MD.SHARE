@@ -9,7 +9,7 @@ create table if not exists public.events (
   reminder_minutes integer not null default 15,
   reminder_sent_at timestamptz,
   shared_with uuid[] not null default '{}',
-  created_at timestamptz not null default now(),1
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
