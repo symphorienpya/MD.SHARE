@@ -25,3 +25,7 @@ Private, administrator-managed resource sharing and team communication platform 
 7. Open `http://localhost:3000`
 
 The default seed credentials come from `ADMIN_EMAIL` and `ADMIN_PASSWORD`. Change the example password before deployment.
+
+## Event email reminders
+
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and optionally `SMTP_FROM` in `.env` to enable 15-minute event reminder emails. Restart the server after changing SMTP settings. When SMTP is not configured, in-platform reminders continue to work.

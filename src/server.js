@@ -15,6 +15,7 @@ const Event = require('./models/Event');
 const Notification = require('./models/Notification');
 const i18n = require('./i18n');
 const Team = require('./models/Team');
+const mailer = require('./services/mailer');
 
 const app = express();
 const server = http.createServer(app);
@@ -141,6 +142,11 @@ async function processEventReminders() {
       })));
       await Event.markReminderSent(event._id);
       notifications.forEach((notification) => io.to(`user:${notification.recipient}`).emit('notification:new', notification));
+      const recipients = await User.find({ _id: { $in: recipientIds } });
+      await mailer.sendEventReminder({
+        recipients: recipients.map((recipient) => recipient.email).filter(Boolean),
+        event
+      });
     }
   } catch (error) {
     console.error('Event reminder processing failed:', error.message);

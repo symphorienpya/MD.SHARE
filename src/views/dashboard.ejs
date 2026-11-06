@@ -55,7 +55,7 @@
         <label><%= t('location') %><input class="form-control" id="eventLocation" maxlength="120"></label>
         <label><%= t('starts') %><input class="form-control" id="eventStartsAt" type="datetime-local" required></label>
         <label><%= t('ends') %><input class="form-control" id="eventEndsAt" type="datetime-local"></label>
-        <label><%= t('reminder') %><select class="form-select" id="eventReminderMinutes"><option value="15">15 <%= t('minutesBefore') %></option><option value="30">30 <%= t('minutesBefore') %></option><option value="60"><%= t('hourBefore') %></option><option value="1440"><%= t('dayBefore') %></option></select></label>
+        <label><%= t('reminder') %><select class="form-select" id="eventReminderMinutes" disabled><option value="15">15 <%= t('minutesBefore') %></option></select></label>
         <button class="btn btn-primary" type="submit"><%= t('saveEvent') %></button>
       </form>
       <div class="schedule-list" id="scheduleList">
